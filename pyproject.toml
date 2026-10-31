@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["fastapi", "uvicorn[standard]", "httpx"]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
+dev = ["pytest>=8", "pytest-cov", "ruff>=0.6", "mypy>=1.10"]
 
 [project.scripts]
 diabetes-classifier = "diabetes_classifier.cli:main"
@@ -51,4 +51,5 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=diabetes_classifier --cov-report=term-missing"
 pythonpath = ["."]  # lets tests import the web/ package from the repository root
