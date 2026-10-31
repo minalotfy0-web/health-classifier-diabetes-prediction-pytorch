@@ -40,6 +40,9 @@ jobs:
           ruff check .
           ruff format --check .
 
+      - name: Type check
+        run: mypy src
+
       - name: Test
         run: pytest
 
