@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Diabetes Prediction with PyTorch"
+abstract: >-
+  A neural-network classifier for the Pima Indians Diabetes dataset, benchmarked
+  against classical baselines with repeated cross-validation.
+type: software
+authors:
+  - given-names: Mina Lotfy Saad
+    family-names: Gergis
+version: 2.0.0
+date-released: 2026-10-31
+license: MIT
+repository-code: "https://github.com/minalotfy0-web/health-classifier-diabetes-prediction-pytorch"
+keywords:
+  - diabetes
+  - machine learning
+  - pytorch
+  - classification

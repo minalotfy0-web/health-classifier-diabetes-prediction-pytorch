@@ -7,6 +7,11 @@
 
 A neural-network classifier that predicts whether a patient has diabetes from eight routine medical measurements, trained on the [Pima Indians Diabetes Database](data/README.md) and benchmarked against classical baselines. Originally built for the Systems Engineering module (WiSe 2023/24).
 
+**At a glance:** an ensemble of neural networks and gradient boosting, chosen by repeated cross-validation, reaches **0.844 ROC AUC, 76.0 % accuracy and 83.3 % recall** on 154 held-out patients. It is on par with well-tuned classical models, and the README reports where the differences are within noise.
+
+> [!WARNING]
+> This is a research and teaching project, **not a medical device**. Do not use it to diagnose, screen or make treatment decisions. See [Limitations](#limitations).
+
 ## Results
 
 ### Cross-validation (model selection)
@@ -18,16 +23,15 @@ A neural-network classifier that predicts whether a patient has diabetes from ei
 |---|---|---|---|---|---|
 | **tuned** | **`nn+gradient_boosting`** | **0.842 ± 0.034** | **74.0 ± 6.1** | **67.2 ± 5.1** | **76.1 ± 10.5** |
 | default | `nn+gradient_boosting` | 0.840 ± 0.035 | 73.6 ± 6.6 | 67.1 ± 5.4 | 76.7 ± 11.3 |
-| default | `random_forest` | 0.840 ± 0.035 | 74.5 ± 4.9 | 66.8 ± 6.2 | 74.6 ± 13.8 |
-| tuned | `random_forest` | 0.840 ± 0.035 | 74.5 ± 4.9 | 66.8 ± 6.2 | 74.6 ± 13.8 |
+| baseline | `random_forest` | 0.840 ± 0.035 | 74.5 ± 4.9 | 66.8 ± 6.2 | 74.6 ± 13.8 |
 | tuned | `nn` | 0.832 ± 0.038 | 72.4 ± 6.4 | 65.1 ± 6.6 | 74.6 ± 15.4 |
-| default | `gradient_boosting` | 0.831 ± 0.032 | 74.2 ± 6.2 | 66.4 ± 4.5 | 72.5 ± 10.7 |
-| tuned | `gradient_boosting` | 0.831 ± 0.032 | 74.2 ± 6.2 | 66.4 ± 4.5 | 72.5 ± 10.7 |
+| baseline | `gradient_boosting` | 0.831 ± 0.032 | 74.2 ± 6.2 | 66.4 ± 4.5 | 72.5 ± 10.7 |
 | default | `nn` | 0.828 ± 0.041 | 72.2 ± 6.7 | 64.5 ± 8.3 | 74.2 ± 18.0 |
-| default | `logistic_regression` | 0.827 ± 0.038 | 72.3 ± 4.8 | 64.3 ± 6.4 | 72.7 ± 14.1 |
-| tuned | `logistic_regression` | 0.827 ± 0.038 | 72.3 ± 4.8 | 64.3 ± 6.4 | 72.7 ± 14.1 |
+| baseline | `logistic_regression` | 0.827 ± 0.038 | 72.3 ± 4.8 | 64.3 ± 6.4 | 72.7 ± 14.1 |
 | original | `nn` | 0.802 ± 0.046 | 72.7 ± 5.2 | 47.5 ± 25.5 | 43.8 ± 24.8 |
 <!-- CV-RESULTS:END -->
+
+The baselines don't depend on the network settings, so `default` and `tuned` give identical baseline scores; each is listed once.
 
 ![Cross-validation comparison](results/figures/cv_comparison.png)
 
@@ -78,7 +82,28 @@ python -m diabetes_classifier train                     # train and evaluate on 
 python -m diabetes_classifier tune --trials 60          # search network hyperparameters
 ```
 
-Every command takes `--config` (default [`configs/default.yaml`](configs/default.yaml)), and common settings can be overridden: `--max-epochs`, `--lr`, `--hidden-sizes`, `--dropout`, `--ensemble-size`, `--cv-folds`, `--cv-repeats`, `--seed`, `--output-dir`. `cv` accepts several configs at once:
+### Predicting for new patients
+
+`train` saves the primary model (the first in the config's `models` list) with its preprocessing and decision threshold as `results/<config>/model.joblib`. The final model is included in the repository:
+
+```bash
+python -m diabetes_classifier predict --glucose 148 --blood-pressure 72 --bmi 33.6 --age 50 --pedigree 0.627
+python -m diabetes_classifier predict --input patients.csv --output predictions.csv
+```
+
+Unknown glucose, blood pressure, skin thickness, insulin or BMI values can be left out (or given as 0); they are imputed like the missing values in the training data. From Python:
+
+```python
+import pandas as pd
+from diabetes_classifier.predict import Predictor
+
+predictor = Predictor.load("results/tuned/model.joblib")
+predictor.predict_proba(pd.read_csv("patients.csv"))   # probability of diabetes
+```
+
+Model files are Python pickles: only load files you trust.
+
+`cv`, `tune` and `train` take `--config` (default [`configs/default.yaml`](configs/default.yaml)), and common settings can be overridden: `--max-epochs`, `--lr`, `--hidden-sizes`, `--dropout`, `--ensemble-size`, `--cv-folds`, `--cv-repeats`, `--seed`, `--output-dir`. `cv` accepts several configs at once:
 
 ```bash
 python -m diabetes_classifier cv --config configs/original.yaml configs/default.yaml configs/tuned.yaml
@@ -122,11 +147,20 @@ python -m diabetes_classifier cv --config configs/original.yaml configs/default.
 │   ├── evaluate.py             threshold selection and metrics
 │   ├── experiment.py           cross-validation and final test evaluation
 │   ├── tune.py                 Optuna hyperparameter search
+│   ├── predict.py              saved model for scoring new patients
 │   ├── plots.py                figures
 │   └── cli.py                  command-line interface
-├── results/                    CV results, test results, figures and logs
+├── results/                    CV results, test results, figures, logs and saved models
 └── tests/                      pytest suite
 ```
+
+## Limitations
+
+- **Not for clinical use.** The model has not been validated clinically, and its errors are substantial: about 1 in 6 people with diabetes is missed and roughly 4 in 10 positive predictions are false alarms on the test set.
+- **Narrow population.** The data covers only women aged 21 or older of Pima Indian heritage, collected in the 1980s and published in 1988. Results may not transfer to men, other populations or current clinical practice.
+- **Small dataset.** 768 patients (154 in the test set), so every reported score carries several points of uncertainty; see the standard deviations in the cross-validation table.
+- **Missing data.** Missing values were recorded as 0 and are imputed with training medians. Nearly half of the insulin values are missing, which limits what the model can learn from them.
+- **Threshold choice.** The decision threshold is tuned for F1 on a small validation set, favouring recall over precision. A real screening setting would choose it from the cost of missed cases versus false alarms.
 
 ## Original report version
 
@@ -139,6 +173,10 @@ pip install -e ".[dev]"
 ruff check . && ruff format --check .
 pytest
 ```
+
+## Citation
+
+If you use this project, please cite it with the metadata in [`CITATION.cff`](CITATION.cff) (GitHub's "Cite this repository" button).
 
 ## License
 
