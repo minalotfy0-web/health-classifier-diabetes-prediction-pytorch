@@ -163,6 +163,9 @@ def _predict(args: argparse.Namespace) -> None:
     if args.output is not None:
         result.to_csv(args.output, index=False)
         print(f"Saved {len(result)} predictions to {args.output}")
+    elif len(result) == 1:
+        patient = result.iloc[0]
+        print(patient.map(lambda v: f"{v:g}" if isinstance(v, float) else v).to_string())
     else:
         print(result.to_string(index=False))
     print(
