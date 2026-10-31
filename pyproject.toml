@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "pytest-cov", "ruff>=0.6"]
 
 [project.scripts]
 diabetes-classifier = "diabetes_classifier.cli:main"
@@ -40,3 +40,4 @@ select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=diabetes_classifier --cov-report=term-missing"
