@@ -1,27 +1,32 @@
-"""Loading, splitting and scaling the Pima Indians Diabetes dataset."""
+"""Loading and splitting the Pima Indians Diabetes dataset."""
 
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+
+from diabetes_classifier.config import Config
+from diabetes_classifier.preprocessing import Preprocessor
 
 TARGET_COLUMN = "Outcome"
 
 
 @dataclass
-class DataSplits:
-    """Standardised train/validation/test tensors."""
+class FoldData:
+    """Preprocessed arrays for one train / validation / evaluation split.
 
-    X_train: torch.Tensor
-    y_train: torch.Tensor
-    X_val: torch.Tensor
-    y_val: torch.Tensor
-    X_test: torch.Tensor
-    y_test: torch.Tensor
+    The validation set is used for early stopping and threshold tuning; the evaluation
+    set (a CV fold or the test set) only for scoring.
+    """
+
+    X_train: np.ndarray
+    y_train: np.ndarray
+    X_val: np.ndarray
+    y_val: np.ndarray
+    X_eval: np.ndarray
+    y_eval: np.ndarray
     feature_names: list[str]
 
     @property
@@ -37,38 +42,37 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     return df
 
 
-def split_and_scale(df: pd.DataFrame, test_size: float, val_size: float, seed: int) -> DataSplits:
-    """Split into stratified train/validation/test sets and standardise the features.
-
-    `test_size` and `val_size` are fractions of the whole dataset. The scaler is fitted
-    on the training set only, so no information leaks from the held-out sets.
-    """
-    features = df.drop(columns=TARGET_COLUMN)
-    X = features.to_numpy(dtype=np.float32)
-    y = df[TARGET_COLUMN].to_numpy(dtype=np.float32)
-
-    X_rest, X_test, y_rest, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=seed, stratify=y
+def stratified_split(
+    df: pd.DataFrame, held_out_fraction: float, seed: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split rows into (rest, held_out), keeping the outcome ratio in both parts."""
+    rest, held_out = train_test_split(
+        df, test_size=held_out_fraction, random_state=seed, stratify=df[TARGET_COLUMN]
     )
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_rest,
-        y_rest,
-        test_size=val_size / (1 - test_size),
-        random_state=seed,
-        stratify=y_rest,
+    return rest, held_out
+
+
+def split_development_test(df: pd.DataFrame, config: Config) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The test set is split off first and used only by the final evaluation."""
+    return stratified_split(df, config.test_size, config.seed)
+
+
+def prepare_fold(
+    train_df: pd.DataFrame, val_df: pd.DataFrame, eval_df: pd.DataFrame, config: Config
+) -> FoldData:
+    """Fit the preprocessor on the training rows and transform all three parts."""
+    preprocessor = Preprocessor(
+        config.zero_as_missing, config.missing_indicators, config.log_transform
     )
+    preprocessor.fit(train_df.drop(columns=TARGET_COLUMN))
 
-    scaler = StandardScaler().fit(X_train)
+    def arrays(part: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+        X = preprocessor.transform(part.drop(columns=TARGET_COLUMN))
+        return X, part[TARGET_COLUMN].to_numpy(dtype=np.float32)
 
-    def to_tensor(array: np.ndarray) -> torch.Tensor:
-        return torch.from_numpy(np.asarray(array, dtype=np.float32))
-
-    return DataSplits(
-        X_train=to_tensor(scaler.transform(X_train)),
-        y_train=to_tensor(y_train),
-        X_val=to_tensor(scaler.transform(X_val)),
-        y_val=to_tensor(y_val),
-        X_test=to_tensor(scaler.transform(X_test)),
-        y_test=to_tensor(y_test),
-        feature_names=list(features.columns),
+    X_train, y_train = arrays(train_df)
+    X_val, y_val = arrays(val_df)
+    X_eval, y_eval = arrays(eval_df)
+    return FoldData(
+        X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_
     )

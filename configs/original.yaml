@@ -1,0 +1,36 @@
+# The original network and optimiser from the course report, evaluated with the
+# validation split. Kept as the reference point for the improvements in default.yaml.
+
+seed: 974
+data_path: ../data/diabetes.csv
+test_size: 0.2
+val_size: 0.1
+
+# No preprocessing beyond standard scaling
+zero_as_missing: []
+missing_indicators: false
+log_transform: []
+
+hidden_sizes: [8, 16, 32, 16, 8]
+dropout: 0.5
+dropout_layers: [3]
+batch_norm: false
+
+# Full-batch SGD for a fixed number of epochs
+optimizer: sgd
+learning_rate: 0.01
+weight_decay: 0.0
+batch_size: null
+max_epochs: 7000
+patience: null
+lr_scheduler: false
+pos_weight: null
+log_every: 500
+
+threshold: 0.5
+ensemble_size: 1
+models: [nn]
+
+cv_folds: 5
+cv_repeats: 5
+output_dir: ../results
