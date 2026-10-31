@@ -91,6 +91,24 @@ python -m diabetes_classifier predict --glucose 148 --blood-pressure 72 --bmi 33
 python -m diabetes_classifier predict --input patients.csv --output predictions.csv
 ```
 
+Output of the first command:
+
+```text
+Pregnancies                        0
+Glucose                          148
+BloodPressure                     72
+SkinThickness                      0
+Insulin                            0
+BMI                             33.6
+DiabetesPedigreeFunction       0.627
+Age                               50
+probability                    0.862
+prediction                  diabetes
+Model: nn+gradient_boosting, threshold 0.394. Research project only, not for clinical use.
+```
+
+With `--input`, the CSV needs the eight feature columns (other columns, such as `Outcome`, are kept); without `--output`, the predictions are printed as a table.
+
 Unknown glucose, blood pressure, skin thickness, insulin or BMI values can be left out (or given as 0); they are imputed like the missing values in the training data. From Python:
 
 ```python
