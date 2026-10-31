@@ -24,6 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]
+web = ["fastapi", "uvicorn[standard]", "httpx"]
 
 [project.scripts]
 diabetes-classifier = "diabetes_classifier.cli:main"
@@ -40,3 +41,4 @@ select = ["E", "W", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # lets tests import the web/ package from the repository root

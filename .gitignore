@@ -12,6 +12,9 @@
 !/data/
 !/src/
 !/tests/
+!/web/
+!/Dockerfile
+!/.dockerignore
 !/results/
 
 # Build and tool caches inside the allowed folders
