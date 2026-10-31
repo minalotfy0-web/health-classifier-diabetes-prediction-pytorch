@@ -26,9 +26,16 @@ jobs:
       - name: Install dependencies
         run: |
           pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements.txt -e ".[dev,web]"
+
+      - name: Install pinned requirements (tested versions, 3.13 only)
+        if: matrix.python-version == '3.13'
+        run: pip install -r requirements.txt
+
+      - name: Install package
+        run: pip install -e ".[dev,web]"
 
       - name: Lint
+        if: matrix.python-version == '3.13'
         run: |
           ruff check .
           ruff format --check .
