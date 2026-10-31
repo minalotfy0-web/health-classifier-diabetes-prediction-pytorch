@@ -1,7 +1,7 @@
-14:11:36 INFO Samples: 537 train / 77 validation / 154 test | 13 features
-14:11:44 INFO test nn                     accuracy 0.766 | precision 0.615 | recall 0.889 | f1 0.727 | roc_auc 0.862
-14:11:44 INFO test logistic_regression    accuracy 0.786 | precision 0.756 | recall 0.574 | f1 0.653 | roc_auc 0.873
-14:11:44 INFO test random_forest          accuracy 0.740 | precision 0.590 | recall 0.852 | f1 0.697 | roc_auc 0.834
-14:11:44 INFO test gradient_boosting      accuracy 0.734 | precision 0.592 | recall 0.778 | f1 0.672 | roc_auc 0.818
-14:11:44 INFO test nn+gradient_boosting   accuracy 0.760 | precision 0.616 | recall 0.833 | f1 0.709 | roc_auc 0.844
-14:11:44 INFO Saved figures to configs/../results/tuned/figures
+14:34:25 INFO Samples: 537 train / 77 validation / 154 test | 13 features
+14:34:35 INFO test nn+gradient_boosting   accuracy 0.760 | precision 0.616 | recall 0.833 | f1 0.709 | roc_auc 0.844
+14:34:35 INFO test nn                     accuracy 0.766 | precision 0.615 | recall 0.889 | f1 0.727 | roc_auc 0.862
+14:34:35 INFO test logistic_regression    accuracy 0.786 | precision 0.756 | recall 0.574 | f1 0.653 | roc_auc 0.873
+14:34:35 INFO test random_forest          accuracy 0.740 | precision 0.590 | recall 0.852 | f1 0.697 | roc_auc 0.834
+14:34:35 INFO test gradient_boosting      accuracy 0.734 | precision 0.592 | recall 0.778 | f1 0.672 | roc_auc 0.818
+14:34:35 INFO Saved figures to configs/../results/tuned/figures

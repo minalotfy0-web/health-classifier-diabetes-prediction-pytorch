@@ -36,11 +36,11 @@
     "threshold": "f1",
     "ensemble_size": 5,
     "models": [
+      "nn+gradient_boosting",
       "nn",
       "logistic_regression",
       "random_forest",
-      "gradient_boosting",
-      "nn+gradient_boosting"
+      "gradient_boosting"
     ],
     "cv_folds": 5,
     "cv_repeats": 5,
@@ -54,6 +54,24 @@
     7
   ],
   "test": {
+    "nn+gradient_boosting": {
+      "threshold": 0.393791194914665,
+      "accuracy": 0.7597402597402597,
+      "precision": 0.6164383561643836,
+      "recall": 0.8333333333333334,
+      "f1": 0.7086614173228346,
+      "roc_auc": 0.8442592592592593,
+      "confusion_matrix": [
+        [
+          72,
+          28
+        ],
+        [
+          9,
+          45
+        ]
+      ]
+    },
     "nn": {
       "threshold": 0.4080890715122223,
       "accuracy": 0.7662337662337663,
@@ -91,7 +109,7 @@
       ]
     },
     "random_forest": {
-      "threshold": 0.36698870691928187,
+      "threshold": 0.3669887069192818,
       "accuracy": 0.7402597402597403,
       "precision": 0.5897435897435898,
       "recall": 0.8518518518518519,
@@ -123,24 +141,6 @@
         [
           12,
           42
-        ]
-      ]
-    },
-    "nn+gradient_boosting": {
-      "threshold": 0.393791194914665,
-      "accuracy": 0.7597402597402597,
-      "precision": 0.6164383561643836,
-      "recall": 0.8333333333333334,
-      "f1": 0.7086614173228346,
-      "roc_auc": 0.8442592592592593,
-      "confusion_matrix": [
-        [
-          72,
-          28
-        ],
-        [
-          9,
-          45
         ]
       ]
     }
