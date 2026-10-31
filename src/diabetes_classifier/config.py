@@ -76,8 +76,8 @@ class Config:
             raise ValueError("dropout must be in [0, 1)")
         if self.optimizer not in ("adamw", "sgd"):
             raise ValueError(f"optimizer must be 'adamw' or 'sgd', got {self.optimizer!r}")
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be positive")
+        if self.learning_rate < 0:
+            raise ValueError("learning_rate must not be negative")
         if self.weight_decay < 0:
             raise ValueError("weight_decay must not be negative")
         if self.batch_size is not None and self.batch_size < 1:
