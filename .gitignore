@@ -1,0 +1,13 @@
+# Code-only repo: ignore everything, then allow the published files
+/*
+!/.gitignore
+!/README.md
+!/Code.py
+!/Trials.csv
+!/Trials_list.json
+!/Trials.xlsx
+!/Scatter Plot.png
+!/dataset/
+/dataset/*
+!/dataset/diabetes.csv
+!/dataset/readme.txt
