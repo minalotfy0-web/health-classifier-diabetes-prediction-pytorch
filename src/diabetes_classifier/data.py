@@ -1,11 +1,12 @@
 """Loading and splitting the Pima Indians Diabetes dataset."""
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold, train_test_split
 
 from diabetes_classifier.config import Config
 from diabetes_classifier.preprocessing import Preprocessor
@@ -46,10 +47,11 @@ class FoldData:
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
-    """Read the dataset CSV and check that it has the target column."""
+    """Read the dataset CSV and check that it has the target and feature columns."""
     df = pd.read_csv(path)
-    if TARGET_COLUMN not in df.columns:
-        raise ValueError(f"Expected a '{TARGET_COLUMN}' column in {path}")
+    missing = [c for c in (*FEATURE_COLUMNS, TARGET_COLUMN) if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing columns {missing} in {path}")
     return df
 
 
@@ -87,3 +89,20 @@ def prepare_fold(
     return FoldData(
         X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_, preprocessor
     )
+
+
+def cv_folds(
+    development: pd.DataFrame, splitter: StratifiedKFold | RepeatedStratifiedKFold, config: Config
+) -> Iterator[FoldData]:
+    """Yield the preprocessed data of each CV fold, in the splitter's order.
+
+    The held-out fold is the evaluation set; the rest is split again into train and
+    validation parts, seeded with `config.seed + fold index`.
+    """
+    for index, (fit_index, eval_index) in enumerate(
+        splitter.split(development, development[TARGET_COLUMN])
+    ):
+        train_df, val_df = stratified_split(
+            development.iloc[fit_index], config.val_fraction_of_development, config.seed + index
+        )
+        yield prepare_fold(train_df, val_df, development.iloc[eval_index], config)

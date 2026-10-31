@@ -3,27 +3,22 @@
 import dataclasses
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import optuna
+from optuna.trial import FixedTrial
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
 from diabetes_classifier.config import Config
-from diabetes_classifier.data import (
-    TARGET_COLUMN,
-    FoldData,
-    load_dataset,
-    prepare_fold,
-    split_development_test,
-    stratified_split,
-)
+from diabetes_classifier.data import FoldData, cv_folds, load_dataset, split_development_test
 from diabetes_classifier.train import predict_proba, train_model
 
 logger = logging.getLogger(__name__)
 
 
-def suggest_params(trial: optuna.Trial) -> dict:
+def suggest_params(trial: optuna.Trial | FixedTrial) -> dict[str, Any]:
     """Search space: depth, width (halving per layer), regularisation and optimiser."""
     n_layers = trial.suggest_int("n_layers", 1, 3)
     width = trial.suggest_categorical("width", [16, 32, 64, 128])
@@ -46,6 +41,8 @@ def tune(
     by mean ROC AUC; unpromising trials are pruned after each fold. Returns `config`
     updated with the best parameters (named "tuned") and the study.
     """
+    if n_trials < 1:
+        raise ValueError("n_trials must be at least 1")
     folds = _prepare_folds(config)
 
     def objective(trial: optuna.Trial) -> float:
@@ -69,12 +66,13 @@ def tune(
     study.optimize(objective, n_trials=n_trials, timeout=timeout)
     logger.info("Best CV ROC AUC %.4f with %s", study.best_value, study.best_params)
 
-    best = optuna.trial.FixedTrial(study.best_params)
+    best = FixedTrial(study.best_params)
     tuned = dataclasses.replace(config, name="tuned", **suggest_params(best), dropout_layers=None)
     return tuned, study
 
 
 def save_study(study: optuna.Study, output_dir: str | Path) -> Path:
+    """Write every trial of the study to `<output_dir>/tuning/trials.csv`."""
     path = Path(output_dir) / "tuning" / "trials.csv"
     path.parent.mkdir(parents=True, exist_ok=True)
     study.trials_dataframe().to_csv(path, index=False)
@@ -84,12 +82,4 @@ def save_study(study: optuna.Study, output_dir: str | Path) -> Path:
 def _prepare_folds(config: Config) -> list[FoldData]:
     development, _ = split_development_test(load_dataset(config.data_path), config)
     splitter = StratifiedKFold(n_splits=config.cv_folds, shuffle=True, random_state=config.seed)
-    folds = []
-    for index, (fit_index, eval_index) in enumerate(
-        splitter.split(development, development[TARGET_COLUMN])
-    ):
-        train_df, val_df = stratified_split(
-            development.iloc[fit_index], config.val_fraction_of_development, config.seed + index
-        )
-        folds.append(prepare_fold(train_df, val_df, development.iloc[eval_index], config))
-    return folds
+    return list(cv_folds(development, splitter, config))
