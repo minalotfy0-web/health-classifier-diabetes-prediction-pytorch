@@ -5,9 +5,10 @@
 !/.github/
 !/README.md
 !/LICENSE
+!/CITATION.cff
 !/pyproject.toml
 !/requirements.txt
-!/config.yaml
+!/configs/
 !/data/
 !/src/
 !/tests/

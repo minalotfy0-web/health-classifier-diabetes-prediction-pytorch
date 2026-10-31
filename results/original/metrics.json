@@ -1,0 +1,64 @@
+{
+  "config": {
+    "name": "original",
+    "seed": 974,
+    "data_path": "configs/../data/diabetes.csv",
+    "test_size": 0.2,
+    "val_size": 0.1,
+    "zero_as_missing": [],
+    "missing_indicators": false,
+    "log_transform": [],
+    "hidden_sizes": [
+      8,
+      16,
+      32,
+      16,
+      8
+    ],
+    "dropout": 0.5,
+    "dropout_layers": [
+      3
+    ],
+    "batch_norm": false,
+    "optimizer": "sgd",
+    "learning_rate": 0.01,
+    "weight_decay": 0.0,
+    "batch_size": null,
+    "max_epochs": 7000,
+    "patience": null,
+    "lr_scheduler": false,
+    "pos_weight": null,
+    "log_every": 500,
+    "threshold": 0.5,
+    "ensemble_size": 1,
+    "models": [
+      "nn"
+    ],
+    "cv_folds": 5,
+    "cv_repeats": 5,
+    "output_dir": "configs/../results"
+  },
+  "best_epochs": [
+    6995
+  ],
+  "test": {
+    "nn": {
+      "threshold": 0.5,
+      "accuracy": 0.7792207792207793,
+      "precision": 0.6851851851851852,
+      "recall": 0.6851851851851852,
+      "f1": 0.6851851851851852,
+      "roc_auc": 0.8425,
+      "confusion_matrix": [
+        [
+          83,
+          17
+        ],
+        [
+          17,
+          37
+        ]
+      ]
+    }
+  }
+}

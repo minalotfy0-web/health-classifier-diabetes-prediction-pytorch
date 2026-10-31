@@ -1,0 +1,31 @@
+14:08:00 INFO [tuned] fold 1/25 done
+14:08:06 INFO [tuned] fold 2/25 done
+14:08:12 INFO [tuned] fold 3/25 done
+14:08:18 INFO [tuned] fold 4/25 done
+14:08:24 INFO [tuned] fold 5/25 done
+14:08:30 INFO [tuned] fold 6/25 done
+14:08:36 INFO [tuned] fold 7/25 done
+14:08:41 INFO [tuned] fold 8/25 done
+14:08:46 INFO [tuned] fold 9/25 done
+14:08:52 INFO [tuned] fold 10/25 done
+14:08:58 INFO [tuned] fold 11/25 done
+14:09:03 INFO [tuned] fold 12/25 done
+14:09:09 INFO [tuned] fold 13/25 done
+14:09:16 INFO [tuned] fold 14/25 done
+14:09:23 INFO [tuned] fold 15/25 done
+14:09:31 INFO [tuned] fold 16/25 done
+14:09:36 INFO [tuned] fold 17/25 done
+14:09:43 INFO [tuned] fold 18/25 done
+14:09:49 INFO [tuned] fold 19/25 done
+14:09:57 INFO [tuned] fold 20/25 done
+14:10:03 INFO [tuned] fold 21/25 done
+14:10:09 INFO [tuned] fold 22/25 done
+14:10:16 INFO [tuned] fold 23/25 done
+14:10:21 INFO [tuned] fold 24/25 done
+14:10:28 INFO [tuned] fold 25/25 done
+14:10:28 INFO [tuned] nn+gradient_boosting   ROC AUC 0.842 ± 0.034 | accuracy 74.0% ± 6.1
+14:10:28 INFO [tuned] random_forest          ROC AUC 0.840 ± 0.035 | accuracy 74.5% ± 4.9
+14:10:28 INFO [tuned] nn                     ROC AUC 0.832 ± 0.038 | accuracy 72.4% ± 6.4
+14:10:28 INFO [tuned] gradient_boosting      ROC AUC 0.831 ± 0.032 | accuracy 74.2% ± 6.2
+14:10:28 INFO [tuned] logistic_regression    ROC AUC 0.827 ± 0.038 | accuracy 72.3% ± 4.8
+14:10:29 INFO Saved configs/../results/figures/cv_comparison.png

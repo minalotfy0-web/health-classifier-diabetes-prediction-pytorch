@@ -1,0 +1,148 @@
+{
+  "config": {
+    "name": "tuned",
+    "seed": 974,
+    "data_path": "configs/../data/diabetes.csv",
+    "test_size": 0.2,
+    "val_size": 0.1,
+    "zero_as_missing": [
+      "Glucose",
+      "BloodPressure",
+      "SkinThickness",
+      "Insulin",
+      "BMI"
+    ],
+    "missing_indicators": true,
+    "log_transform": [
+      "Insulin",
+      "DiabetesPedigreeFunction",
+      "Age"
+    ],
+    "hidden_sizes": [
+      128
+    ],
+    "dropout": 0.2567998868214429,
+    "dropout_layers": null,
+    "batch_norm": true,
+    "optimizer": "adamw",
+    "learning_rate": 0.0028957411603313587,
+    "weight_decay": 0.0013738095985112633,
+    "batch_size": 64,
+    "max_epochs": 1000,
+    "patience": 100,
+    "lr_scheduler": true,
+    "pos_weight": "auto",
+    "log_every": 100,
+    "threshold": "f1",
+    "ensemble_size": 5,
+    "models": [
+      "nn+gradient_boosting",
+      "nn",
+      "logistic_regression",
+      "random_forest",
+      "gradient_boosting"
+    ],
+    "cv_folds": 5,
+    "cv_repeats": 5,
+    "output_dir": "configs/../results"
+  },
+  "best_epochs": [
+    19,
+    12,
+    8,
+    18,
+    7
+  ],
+  "test": {
+    "nn+gradient_boosting": {
+      "threshold": 0.393791194914665,
+      "accuracy": 0.7597402597402597,
+      "precision": 0.6164383561643836,
+      "recall": 0.8333333333333334,
+      "f1": 0.7086614173228346,
+      "roc_auc": 0.8442592592592593,
+      "confusion_matrix": [
+        [
+          72,
+          28
+        ],
+        [
+          9,
+          45
+        ]
+      ]
+    },
+    "nn": {
+      "threshold": 0.4080890715122223,
+      "accuracy": 0.7662337662337663,
+      "precision": 0.6153846153846154,
+      "recall": 0.8888888888888888,
+      "f1": 0.7272727272727273,
+      "roc_auc": 0.8622222222222223,
+      "confusion_matrix": [
+        [
+          70,
+          30
+        ],
+        [
+          6,
+          48
+        ]
+      ]
+    },
+    "logistic_regression": {
+      "threshold": 0.7102503180503845,
+      "accuracy": 0.7857142857142857,
+      "precision": 0.7560975609756098,
+      "recall": 0.5740740740740741,
+      "f1": 0.6526315789473685,
+      "roc_auc": 0.872962962962963,
+      "confusion_matrix": [
+        [
+          90,
+          10
+        ],
+        [
+          23,
+          31
+        ]
+      ]
+    },
+    "random_forest": {
+      "threshold": 0.3669887069192818,
+      "accuracy": 0.7402597402597403,
+      "precision": 0.5897435897435898,
+      "recall": 0.8518518518518519,
+      "f1": 0.696969696969697,
+      "roc_auc": 0.8342592592592593,
+      "confusion_matrix": [
+        [
+          68,
+          32
+        ],
+        [
+          8,
+          46
+        ]
+      ]
+    },
+    "gradient_boosting": {
+      "threshold": 0.3825816268188907,
+      "accuracy": 0.7337662337662337,
+      "precision": 0.5915492957746479,
+      "recall": 0.7777777777777778,
+      "f1": 0.672,
+      "roc_auc": 0.8181481481481482,
+      "confusion_matrix": [
+        [
+          71,
+          29
+        ],
+        [
+          12,
+          42
+        ]
+      ]
+    }
+  }
+}
