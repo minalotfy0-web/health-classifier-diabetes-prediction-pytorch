@@ -94,7 +94,10 @@ def create_app(model_path: str | Path | None = None) -> FastAPI:
     def predict(patient: PatientFeatures) -> PredictionResponse:
         if predictor is None:
             raise HTTPException(status_code=503, detail="Model not loaded")
-        probability = float(predictor.predict_proba(patient.to_frame())[0])
+        try:
+            probability = float(predictor.predict_proba(patient.to_frame())[0])
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
         positive = int(probability >= predictor.threshold)
         return PredictionResponse(
             probability=round(probability, 3),
