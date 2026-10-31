@@ -1,0 +1,10 @@
+# Allowlist: only what the image needs (see Dockerfile).
+*
+!requirements.txt
+!pyproject.toml
+!README.md
+!LICENSE
+!src/
+!web/
+!results/tuned/model.joblib
+**/__pycache__
