@@ -1,0 +1,2 @@
+timestamp,seed,hidden_sizes,dropout,epochs,learning_rate,best_epoch,best_val_loss,train_accuracy,test_accuracy,precision,recall,f1,roc_auc
+2026-10-31T13:33:23+00:00,974,8-16-32-16-8,0.5,7000,0.01,6929,0.5015,0.7896,0.7727,0.6727,0.6852,0.6789,0.8425

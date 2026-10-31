@@ -1,13 +1,20 @@
-# Code-only repo: ignore everything, then allow the published files
+# This folder also holds the (unpublished) report, so the repo is an allowlist:
+# ignore everything at the top level, then allow the published paths.
 /*
 !/.gitignore
+!/.github/
 !/README.md
-!/Code.py
-!/Trials.csv
-!/Trials_list.json
-!/Trials.xlsx
-!/Scatter Plot.png
-!/dataset/
-/dataset/*
-!/dataset/diabetes.csv
-!/dataset/readme.txt
+!/LICENSE
+!/pyproject.toml
+!/requirements.txt
+!/config.yaml
+!/data/
+!/src/
+!/tests/
+!/results/
+
+# Build and tool caches inside the allowed folders
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
