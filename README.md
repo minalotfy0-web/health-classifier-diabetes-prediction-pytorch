@@ -14,7 +14,7 @@ Test set (154 patients, never used for training or model selection):
 <!-- RESULTS:START -->
 | Accuracy | Precision | Recall | F1 | ROC AUC |
 |---|---|---|---|---|
-| _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
+| 77.3 % | 67.3 % | 68.5 % | 67.9 % | 0.843 |
 <!-- RESULTS:END -->
 
 <p align="center">
