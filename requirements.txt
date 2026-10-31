@@ -1,0 +1,9 @@
+# Pinned versions tested with Python 3.13 on CPU.
+# CPU-only torch: pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0
+numpy==2.5.3
+pandas==3.0.5
+scikit-learn==1.9.1
+matplotlib==3.11.2
+seaborn==0.13.2
+PyYAML==6.0.2
