@@ -107,10 +107,13 @@ def test_single_class_validation_set(label):
 
 
 @pytest.mark.parametrize("label", [0, 1])
-def test_roc_auc_of_a_single_class_raises(label):
-    # ROC AUC is undefined without both classes
-    with pytest.raises(ValueError):
-        compute_metrics(np.full(4, label), np.array([0.1, 0.4, 0.6, 0.9]), 0.5)
+def test_roc_auc_of_a_single_class_is_undefined(label):
+    # ROC AUC needs both classes: scikit-learn returns NaN (older versions raised)
+    try:
+        metrics = compute_metrics(np.full(4, label), np.array([0.1, 0.4, 0.6, 0.9]), 0.5)
+    except ValueError:
+        return
+    assert math.isnan(metrics.roc_auc)
 
 
 def test_metrics_accept_float_labels_and_lists():
