@@ -98,7 +98,7 @@ import pandas as pd
 from diabetes_classifier.predict import Predictor
 
 predictor = Predictor.load("results/tuned/model.joblib")
-predictor.predict_proba(pd.read_csv("patients.csv"))   # probability of diabetes
+predictor.predict_proba(pd.read_csv("patients.csv"))  # probability of diabetes
 ```
 
 Model files are Python pickles: only load files you trust.

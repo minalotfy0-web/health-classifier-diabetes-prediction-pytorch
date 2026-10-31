@@ -151,7 +151,9 @@ def _predict(args: argparse.Namespace) -> None:
         ]
         if missing:
             raise SystemExit(f"Give --input or at least {' and '.join(missing)}")
-        features = pd.DataFrame([{column: getattr(args, column) or 0.0 for column in FEATURE_FLAGS}])
+        features = pd.DataFrame(
+            [{column: getattr(args, column) or 0.0 for column in FEATURE_FLAGS}]
+        )
 
     predictor = Predictor.load(args.model)
     result = features.assign(

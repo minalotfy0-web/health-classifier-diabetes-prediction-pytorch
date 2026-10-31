@@ -88,13 +88,35 @@ def test_cli_train_and_predict(small_config, df, tmp_path, capsys):
     model_path = tmp_path / small_config.name / "model.joblib"
     assert model_path.exists()
 
-    main(["predict", "--model", str(model_path), "--glucose", "148", "--bmi", "33.6",
-          "--age", "50", "--pedigree", "0.627"])
+    main(
+        [
+            "predict",
+            "--model",
+            str(model_path),
+            "--glucose",
+            "148",
+            "--bmi",
+            "33.6",
+            "--age",
+            "50",
+            "--pedigree",
+            "0.627",
+        ]
+    )
     assert "probability" in capsys.readouterr().out
 
     patients = tmp_path / "patients.csv"
     df.head(5)[list(FEATURE_COLUMNS)].to_csv(patients, index=False)
     predictions = tmp_path / "predictions.csv"
-    main(["predict", "--model", str(model_path), "--input", str(patients),
-          "--output", str(predictions)])
+    main(
+        [
+            "predict",
+            "--model",
+            str(model_path),
+            "--input",
+            str(patients),
+            "--output",
+            str(predictions),
+        ]
+    )
     assert set(pd.read_csv(predictions)["prediction"]) <= {"diabetes", "no diabetes"}
