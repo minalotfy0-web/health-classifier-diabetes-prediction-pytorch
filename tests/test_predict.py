@@ -114,15 +114,26 @@ def test_zero_pregnancies_is_a_real_value(tuned_predictor, patients):
 
 @pytest.mark.parametrize("missing", [np.nan, None], ids=["nan", "none"])
 @pytest.mark.parametrize("column", ["Glucose", "BMI", "Age", "Pregnancies"])
-@pytest.mark.xfail(strict=True, reason="NaN/None values are not imputed and give NaN scores")
-def test_missing_values_should_not_give_nan_scores(tuned_predictor, patients, column, missing):
+def test_missing_values_raise(tuned_predictor, patients, column, missing):
     row = patients.iloc[[0]].astype({column: object})
     row.loc[row.index[0], column] = missing
-    try:
-        probabilities = tuned_predictor.predict_proba(row)
-    except ValueError:
-        return  # refusing is acceptable
-    assert np.isfinite(probabilities).all()
+    with pytest.raises(ValueError):
+        tuned_predictor.predict_proba(row)
+    with pytest.raises(ValueError):
+        tuned_predictor.predict(row)
+
+
+@pytest.mark.parametrize("bad", [np.inf, -np.inf, -1.0])
+def test_infinite_and_negative_values_raise(tuned_predictor, patients, bad):
+    row = patients.iloc[[0]].astype({"Glucose": float})
+    row["Glucose"] = bad
+    with pytest.raises(ValueError):
+        tuned_predictor.predict_proba(row)
+
+
+def test_empty_frame_raises(tuned_predictor, patients):
+    with pytest.raises(ValueError):
+        tuned_predictor.predict_proba(patients.iloc[0:0])
 
 
 def test_save_and_load_round_trip(tuned_predictor, patients, tmp_path):

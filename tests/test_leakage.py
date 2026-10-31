@@ -97,11 +97,15 @@ def test_transform_with_missing_column_raises():
         pre.transform(make_train().drop(columns="Glucose"))
 
 
-@pytest.mark.xfail(strict=True, reason="a column that is all zeros in training gets a NaN median")
-def test_all_zero_training_column_gives_finite_features():
+def test_all_zero_training_column_raises():
     train = make_train().assign(Insulin=0.0)
-    X = Preprocessor(["Insulin"]).fit(train).transform(train)
-    assert np.isfinite(X).all()
+    with pytest.raises(ValueError):
+        Preprocessor(["Insulin"]).fit(train)
+
+
+def test_fit_with_a_missing_column_raises():
+    with pytest.raises(ValueError):
+        Preprocessor(["Glucose", "BMI"]).fit(make_train())
 
 
 def split_parts(df, config):

@@ -4,6 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A neural-network classifier that predicts whether a patient has diabetes from eight routine medical measurements, trained on the [Pima Indians Diabetes Database](data/README.md) and benchmarked against classical baselines. Originally built for the Systems Engineering module (WiSe 2023/24).
 
@@ -133,6 +134,41 @@ python -m diabetes_classifier cv --config configs/original.yaml configs/default.
 | [`default.yaml`](configs/default.yaml) | The improved setup described below |
 | [`tuned.yaml`](configs/tuned.yaml) | `default.yaml` with the network hyperparameters found by `tune` |
 
+## Web demo
+
+A small FastAPI app (in [`web/`](web/)) serves the final model with a one-page form and a JSON API. It is a research demo, not a clinical tool.
+
+**Run locally** (from the repository root; `web/` is not part of the installed package):
+
+```bash
+pip install -r requirements.txt -e ".[web]"
+uvicorn web.app:app --port 8000        # then open http://localhost:8000
+```
+
+`MODEL_PATH` selects another saved model (default `results/tuned/model.joblib`). Endpoints:
+
+- `GET /` is the form, `GET /docs` the interactive API docs.
+- `GET /health` returns `{"status": "ok", "model": "nn+gradient_boosting", "model_loaded": true}` (HTTP 503 if the model could not be loaded).
+- `POST /predict` takes JSON with `pregnancies` (default 0), `glucose`, `blood_pressure`, `skin_thickness`, `insulin`, `bmi` (all optional; omit or `null` when not measured), and the required `diabetes_pedigree_function` and `age`. Values outside plausible ranges give HTTP 422.
+
+```bash
+curl -X POST localhost:8000/predict -H "Content-Type: application/json" \
+  -d '{"glucose": 148, "blood_pressure": 72, "bmi": 33.6, "age": 50, "diabetes_pedigree_function": 0.627}'
+# {"probability": 0.862, "threshold": 0.394, "prediction": 1, "label": "Diabetes predicted", "model": "nn+gradient_boosting"}
+```
+
+**Docker** (CPU-only torch, runs as a non-root user, listens on `$PORT`, default 7860):
+
+```bash
+docker build -t diabetes-demo .
+docker run --rm -p 7860:7860 diabetes-demo      # http://localhost:7860
+```
+
+**Deploy for free** (needs your own account; nothing is deployed from this repository automatically):
+
+- *Hugging Face Spaces:* create a new Space with the **Docker** SDK, add `sdk: docker` and `app_port: 7860` to the YAML header of the Space's `README.md`, and push this repository's contents (`Dockerfile`, `src/`, `web/`, `results/tuned/model.joblib`, `requirements.txt`, `pyproject.toml`, `README.md`, `LICENSE`) to it. The Space builds the image and serves it.
+- *Render:* create a **Web Service** from this GitHub repository with the Docker runtime and the free instance type. Render sets `PORT` itself; the service sleeps when idle, so the first request after a pause is slow.
+
 ## Method
 
 **Evaluation.** The data is split once into a stratified development set (80 %) and test set (20 %). All comparisons and tuning use repeated stratified cross-validation on the development set; inside every fold, a validation split is used for early stopping and for choosing the decision threshold, and the held-out fold is only scored. The test set is used once, at the end.
@@ -168,6 +204,7 @@ python -m diabetes_classifier cv --config configs/original.yaml configs/default.
 │   ├── predict.py              saved model for scoring new patients
 │   ├── plots.py                figures
 │   └── cli.py                  command-line interface
+├── web/                        FastAPI web demo (see Web demo)
 ├── results/                    CV results, test results, figures, logs and saved models
 └── tests/                      pytest suite
 ```

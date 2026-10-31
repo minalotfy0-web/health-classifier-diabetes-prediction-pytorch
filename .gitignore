@@ -5,6 +5,10 @@
 !/.github/
 !/README.md
 !/LICENSE
+!/CONTRIBUTING.md
+!/SECURITY.md
+!/CODE_OF_CONDUCT.md
+!/.pre-commit-config.yaml
 !/CITATION.cff
 !/pyproject.toml
 !/requirements.txt
@@ -12,6 +16,9 @@
 !/data/
 !/src/
 !/tests/
+!/web/
+!/Dockerfile
+!/.dockerignore
 !/results/
 
 # Build and tool caches inside the allowed folders

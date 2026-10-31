@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diabetes risk demo</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main>
+    <div class="disclaimer" role="note">
+      <strong>Research project &mdash; not for clinical use.</strong>
+      This model was trained on a small 1980s dataset of Pima Indian women and has not been
+      validated clinically. Do not use it for medical decisions.
+    </div>
+
+    <h1>Diabetes risk demo</h1>
+    <p class="lead">
+      Enter a patient's values to get the model's estimated probability of diabetes. Leave a
+      measurement empty if it is unknown.
+    </p>
+
+    <form id="form" novalidate>
+      <label>Pregnancies
+        <input name="pregnancies" type="number" min="0" max="20" step="1" placeholder="0">
+      </label>
+      <label>Glucose <small>mg/dL, optional</small>
+        <input name="glucose" type="number" min="20" max="400" step="any" placeholder="e.g. 120">
+      </label>
+      <label>Blood pressure <small>diastolic, mm Hg, optional</small>
+        <input name="blood_pressure" type="number" min="20" max="250" step="any" placeholder="e.g. 70">
+      </label>
+      <label>Skin thickness <small>triceps, mm, optional</small>
+        <input name="skin_thickness" type="number" min="1" max="100" step="any" placeholder="e.g. 23">
+      </label>
+      <label>Insulin <small>2-hour, mu U/ml, optional</small>
+        <input name="insulin" type="number" min="1" max="1000" step="any" placeholder="e.g. 80">
+      </label>
+      <label>BMI <small>kg/m&sup2;, optional</small>
+        <input name="bmi" type="number" min="10" max="100" step="any" placeholder="e.g. 32">
+      </label>
+      <label>Diabetes pedigree function <small>required</small>
+        <input name="diabetes_pedigree_function" type="number" min="0" max="5" step="any"
+               placeholder="e.g. 0.47" required>
+      </label>
+      <label>Age <small>years, required</small>
+        <input name="age" type="number" min="18" max="120" step="1" placeholder="e.g. 33" required>
+      </label>
+      <div class="actions">
+        <button type="submit">Predict</button>
+        <button type="reset" class="secondary">Clear</button>
+      </div>
+    </form>
+
+    <section id="result" aria-live="polite" hidden></section>
+
+    <footer>
+      Missing values are imputed as in the training data. Source and method:
+      <a href="https://github.com/minalotfy0-web/health-classifier-diabetes-prediction-pytorch">GitHub</a>.
+    </footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

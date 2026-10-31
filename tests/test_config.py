@@ -69,11 +69,17 @@ def test_valid_edge_values_are_accepted():
         pytest.param({"learning_rate": -1.0}, id="negative-learning-rate"),
         pytest.param({"max_epochs": 0}, id="zero-epochs"),
         pytest.param({"cv_folds": 1}, id="one-cv-fold"),
+        pytest.param({"cv_repeats": 0}, id="zero-cv-repeats"),
+        pytest.param({"log_every": 0}, id="zero-log-every"),
+        pytest.param({"patience": 0}, id="zero-patience"),
+        pytest.param({"models": []}, id="no-models"),
+        pytest.param({"batch_size": 0}, id="zero-batch-size"),
+        pytest.param({"hidden_sizes": [8, 0]}, id="zero-width-layer"),
+        pytest.param({"pos_weight": -1.0}, id="negative-pos-weight"),
     ],
 )
-@pytest.mark.xfail(strict=True, reason="Config.__post_init__ does not validate this value")
-def test_nonsensical_values_should_be_rejected(kwargs):
-    with pytest.raises((ValueError, TypeError)):
+def test_nonsensical_values_are_rejected(kwargs):
+    with pytest.raises(ValueError):
         Config(**kwargs)
 
 

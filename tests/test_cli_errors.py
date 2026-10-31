@@ -193,23 +193,36 @@ def test_predict_with_text_in_the_csv_fails(tuned_model_path, tmp_path, patients
 def test_predict_to_an_unwritable_output_path_fails(tuned_model_path, tmp_path, patients):
     csv = tmp_path / "patients.csv"
     patients.to_csv(csv, index=False)
-    output = tmp_path / "no_such_folder" / "out.csv"
+    output = tmp_path  # an existing folder cannot be written as a file
     argv = ["predict", "--model", str(tuned_model_path), "--input", str(csv)]
     assert_fails([*argv, "--output", str(output)])
 
 
-@pytest.mark.xfail(strict=True, reason="blank CSV cells give NaN probabilities")
-def test_predict_with_blank_csv_cells_should_not_report_nan(tuned_model_path, tmp_path, patients):
+def test_predict_with_blank_csv_cells_exits_with_an_error(tuned_model_path, tmp_path, patients):
     blank = patients.head(3).assign(Glucose=[148.0, None, 90.0])
     csv = tmp_path / "blank.csv"
     blank.to_csv(csv, index=False)
     output = tmp_path / "out.csv"
     argv = ["predict", "--model", str(tuned_model_path), "--input", str(csv)]
-    try:
+    with pytest.raises(SystemExit) as excinfo:
         main([*argv, "--output", str(output)])
-    except (SystemExit, ValueError):
-        return  # refusing is acceptable
-    assert not pd.read_csv(output)["probability"].isna().any()
+    assert excinfo.value.code not in (0, None)
+    assert not output.exists()
+
+
+def test_predict_with_input_and_flags_fails(tuned_model_path, tmp_path, patients):
+    csv = tmp_path / "patients.csv"
+    patients.to_csv(csv, index=False)
+    assert_fails(["predict", "--model", str(tuned_model_path), "--input", str(csv), "--age", "5"])
+
+
+def test_predict_creates_the_output_folder(tuned_model_path, tmp_path, patients):
+    csv = tmp_path / "patients.csv"
+    patients.to_csv(csv, index=False)
+    output = tmp_path / "new" / "folder" / "out.csv"
+    argv = ["predict", "--model", str(tuned_model_path), "--input", str(csv)]
+    main([*argv, "--output", str(output)])
+    assert len(pd.read_csv(output)) == len(patients)
 
 
 # predict, success paths
