@@ -109,6 +109,8 @@ def _pos_weight(setting: float | str | None, y_train: torch.Tensor) -> torch.Ten
         return None
     if setting == "auto":
         positives = y_train.sum()
+        if positives == 0:
+            raise ValueError("pos_weight='auto' needs at least one positive training sample")
         return (len(y_train) - positives) / positives
     return torch.tensor(float(setting))
 

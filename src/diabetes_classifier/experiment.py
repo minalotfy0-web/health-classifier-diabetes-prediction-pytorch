@@ -6,6 +6,7 @@ import logging
 import random
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +17,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from diabetes_classifier import plots
 from diabetes_classifier.config import Config
 from diabetes_classifier.data import (
-    TARGET_COLUMN,
+    cv_folds,
     load_dataset,
     prepare_fold,
     split_development_test,
@@ -51,13 +52,7 @@ def run_cv(config: Config) -> pd.DataFrame:
     n_folds = config.cv_folds * config.cv_repeats
 
     rows = []
-    for fold, (fit_index, eval_index) in enumerate(
-        splitter.split(development, development[TARGET_COLUMN])
-    ):
-        train_df, val_df = stratified_split(
-            development.iloc[fit_index], config.val_fraction_of_development, config.seed + fold
-        )
-        data = prepare_fold(train_df, val_df, development.iloc[eval_index], config)
+    for fold, data in enumerate(cv_folds(development, splitter, config)):
         outputs, _ = fit_predict(config, data, seed=config.seed + 1000 * fold)
         for model_name, output in outputs.items():
             threshold = choose_threshold(data.y_val, output.val_probs, config.threshold)
@@ -108,6 +103,8 @@ def load_cv_folds(output_dir: str | Path) -> pd.DataFrame:
     preprocessing produce identical baseline rows; only the first copy is kept.
     """
     paths = sorted((Path(output_dir) / "cv").glob("*_folds.csv"))
+    if not paths:
+        raise FileNotFoundError(f"No CV results in {Path(output_dir) / 'cv'}; run `cv` first")
     folds = pd.concat(pd.read_csv(path) for path in paths)
     return folds.drop_duplicates(subset=["model", "fold", *METRIC_NAMES])
 
@@ -129,7 +126,7 @@ def plot_cv_results(output_dir: str | Path) -> Path:
     return path
 
 
-def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
+def run_final(config: Config, pairplot: bool = False) -> dict[str, dict[str, Any]]:
     """Train on the development set and evaluate every model once on the test set.
 
     Outputs go to `<output_dir>/<config name>/`: metrics.json, test_results.csv and
@@ -222,7 +219,7 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
     return {name: metrics.as_dict() for name, metrics in results.items()}
 
 
-def _append_trial(path: Path, trial: dict) -> None:
+def _append_trial(path: Path, trial: dict[str, Any]) -> None:
     is_new = not path.exists()
     with path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(trial))

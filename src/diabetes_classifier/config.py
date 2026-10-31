@@ -60,23 +60,55 @@ class Config:
     output_dir: str = "results"
 
     def __post_init__(self) -> None:
+        if self.test_size <= 0 or self.val_size <= 0:
+            raise ValueError("test_size and val_size must be greater than 0")
         if not 0 < self.test_size + self.val_size < 1:
             raise ValueError("test_size + val_size must be between 0 and 1")
+        if not isinstance(self.hidden_sizes, list) or any(
+            not isinstance(width, int) or width < 1 for width in self.hidden_sizes
+        ):
+            raise ValueError("hidden_sizes must be a list of positive integers")
         if self.dropout_layers is not None and any(
-            i >= len(self.hidden_sizes) for i in self.dropout_layers
+            not 0 <= i < len(self.hidden_sizes) for i in self.dropout_layers
         ):
             raise ValueError("dropout_layers refers to a layer that does not exist")
+        if not 0 <= self.dropout < 1:
+            raise ValueError("dropout must be in [0, 1)")
         if self.optimizer not in ("adamw", "sgd"):
             raise ValueError(f"optimizer must be 'adamw' or 'sgd', got {self.optimizer!r}")
-        if isinstance(self.pos_weight, str) and self.pos_weight != "auto":
-            raise ValueError("pos_weight must be a number, 'auto' or null")
-        if isinstance(self.threshold, str) and self.threshold not in ("f1", "youden"):
+        if self.learning_rate <= 0:
+            raise ValueError("learning_rate must be positive")
+        if self.weight_decay < 0:
+            raise ValueError("weight_decay must not be negative")
+        if self.batch_size is not None and self.batch_size < 1:
+            raise ValueError("batch_size must be a positive integer or null")
+        if self.max_epochs < 1:
+            raise ValueError("max_epochs must be at least 1")
+        if self.patience is not None and self.patience < 1:
+            raise ValueError("patience must be a positive integer or null")
+        if self.log_every < 1:
+            raise ValueError("log_every must be at least 1")
+        if isinstance(self.pos_weight, str):
+            if self.pos_weight != "auto":
+                raise ValueError("pos_weight must be a number, 'auto' or null")
+        elif self.pos_weight is not None and self.pos_weight <= 0:
+            raise ValueError("pos_weight must be positive")
+        if isinstance(self.threshold, str):
+            if self.threshold not in ("f1", "youden"):
+                raise ValueError("threshold must be a probability, 'f1' or 'youden'")
+        elif not 0 <= self.threshold <= 1:
             raise ValueError("threshold must be a probability, 'f1' or 'youden'")
+        if not self.models:
+            raise ValueError("models must list at least one model")
         unknown = set(self.models) - set(MODEL_NAMES)
         if unknown:
             raise ValueError(f"Unknown models {sorted(unknown)}; choose from {MODEL_NAMES}")
         if self.ensemble_size < 1:
             raise ValueError("ensemble_size must be at least 1")
+        if self.cv_folds < 2:
+            raise ValueError("cv_folds must be at least 2")
+        if self.cv_repeats < 1:
+            raise ValueError("cv_repeats must be at least 1")
 
     @property
     def val_fraction_of_development(self) -> float:
@@ -89,6 +121,8 @@ def load_config(path: str | Path) -> Config:
     path = Path(path)
     with path.open(encoding="utf-8") as f:
         raw = yaml.safe_load(f) or {}
+    if not isinstance(raw, dict):
+        raise ValueError(f"{path} must contain a mapping of config keys to values")
 
     unknown = set(raw) - {f.name for f in fields(Config)}
     if unknown:

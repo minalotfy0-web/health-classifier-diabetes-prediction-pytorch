@@ -1,6 +1,7 @@
 """Decision thresholds and classification metrics."""
 
 from dataclasses import asdict, dataclass
+from typing import Any
 
 import numpy as np
 from sklearn.metrics import (
@@ -19,6 +20,8 @@ METRIC_NAMES = ("accuracy", "precision", "recall", "f1", "roc_auc")
 
 @dataclass
 class Metrics:
+    """Scores of one model at one decision threshold."""
+
     threshold: float
     accuracy: float
     precision: float
@@ -27,7 +30,7 @@ class Metrics:
     roc_auc: float
     confusion_matrix: list[list[int]]
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def scores(self) -> dict[str, float]:
