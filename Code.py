@@ -170,6 +170,7 @@ plt.ylabel('Loss')
 plt.title('Training and Test Loss Curves')
 plt.legend()
 plt.grid(visible=True)
+plt.savefig('loss_curves.png', dpi=150, bbox_inches='tight')
 plt.show()
 
 #%% Exporting Evaluation Metrics
