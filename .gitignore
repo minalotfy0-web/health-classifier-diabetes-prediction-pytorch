@@ -5,6 +5,10 @@
 !/.github/
 !/README.md
 !/LICENSE
+!/CONTRIBUTING.md
+!/SECURITY.md
+!/CODE_OF_CONDUCT.md
+!/.pre-commit-config.yaml
 !/CITATION.cff
 !/pyproject.toml
 !/requirements.txt
