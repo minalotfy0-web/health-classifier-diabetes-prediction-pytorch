@@ -37,9 +37,7 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     return df
 
 
-def split_and_scale(
-    df: pd.DataFrame, test_size: float, val_size: float, seed: int
-) -> DataSplits:
+def split_and_scale(df: pd.DataFrame, test_size: float, val_size: float, seed: int) -> DataSplits:
     """Split into stratified train/validation/test sets and standardise the features.
 
     `test_size` and `val_size` are fractions of the whole dataset. The scaler is fitted

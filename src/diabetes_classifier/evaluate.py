@@ -35,9 +35,7 @@ def predict_proba(model: nn.Module, X: torch.Tensor) -> np.ndarray:
         return torch.sigmoid(model(X)).numpy()
 
 
-def evaluate(
-    model: nn.Module, X: torch.Tensor, y: torch.Tensor, threshold: float = 0.5
-) -> Metrics:
+def evaluate(model: nn.Module, X: torch.Tensor, y: torch.Tensor, threshold: float = 0.5) -> Metrics:
     """Compute accuracy, precision, recall, F1, ROC AUC and the confusion matrix."""
     y_true = y.numpy().astype(int)
     probabilities = predict_proba(model, X)

@@ -62,9 +62,7 @@ def train(
             )
 
     model.load_state_dict(best_state)
-    logger.info(
-        "Best validation loss %.4f at epoch %d", history.best_val_loss, history.best_epoch
-    )
+    logger.info("Best validation loss %.4f at epoch %d", history.best_val_loss, history.best_epoch)
     return history
 
 
