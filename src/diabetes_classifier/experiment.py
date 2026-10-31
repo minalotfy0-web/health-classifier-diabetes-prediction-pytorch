@@ -166,9 +166,9 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
         plots.pairplot(df).savefig(shared / "pairplot.png", dpi=100, bbox_inches="tight")
     logger.info("Saved figures to %s", figures_dir)
 
-    pd.DataFrame(
-        [{"model": name, **metrics.scores()} for name, metrics in results.items()]
-    ).to_csv(run_dir / "test_results.csv", index=False)
+    pd.DataFrame([{"model": name, **metrics.scores()} for name, metrics in results.items()]).to_csv(
+        run_dir / "test_results.csv", index=False
+    )
     with (run_dir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(
             {

@@ -107,9 +107,7 @@ def main(argv: list[str] | None = None) -> None:
 
 
 def _with_overrides(config: Config, args: argparse.Namespace) -> Config:
-    overrides = {
-        key: value for key in OVERRIDES if (value := getattr(args, key, None)) is not None
-    }
+    overrides = {key: value for key in OVERRIDES if (value := getattr(args, key, None)) is not None}
     return dataclasses.replace(config, **overrides)
 
 

@@ -37,7 +37,9 @@ def suggest_params(trial: optuna.Trial) -> dict:
     }
 
 
-def tune(config: Config, n_trials: int, timeout: float | None = None) -> tuple[Config, optuna.Study]:
+def tune(
+    config: Config, n_trials: int, timeout: float | None = None
+) -> tuple[Config, optuna.Study]:
     """Search network hyperparameters on the development set (the test set is not used).
 
     Each trial trains a single network per fold of `config.cv_folds`-fold CV and is scored

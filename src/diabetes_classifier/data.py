@@ -73,6 +73,4 @@ def prepare_fold(
     X_train, y_train = arrays(train_df)
     X_val, y_val = arrays(val_df)
     X_eval, y_eval = arrays(eval_df)
-    return FoldData(
-        X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_
-    )
+    return FoldData(X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_)
