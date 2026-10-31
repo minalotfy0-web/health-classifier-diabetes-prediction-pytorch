@@ -32,4 +32,6 @@ jobs:
         run: pytest
 
       - name: Smoke-run the CLI
-        run: python -m diabetes_classifier --epochs 50 --output-dir /tmp/smoke
+        run: |
+          python -m diabetes_classifier cv --max-epochs 20 --cv-folds 2 --cv-repeats 1 --output-dir /tmp/smoke
+          python -m diabetes_classifier train --max-epochs 20 --output-dir /tmp/smoke
