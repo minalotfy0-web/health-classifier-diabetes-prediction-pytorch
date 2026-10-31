@@ -5,6 +5,8 @@ import dataclasses
 import logging
 from pathlib import Path
 
+import yaml
+
 from diabetes_classifier.config import Config, load_config, save_config
 
 DEFAULT_CONFIG = Path("configs/default.yaml")
@@ -34,6 +36,7 @@ OVERRIDES = (
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse the command line (a `Namespace` with `command` and that command's options)."""
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--seed", type=int, help="random seed")
     common.add_argument("--max-epochs", type=int, help="maximum training epochs")
@@ -88,13 +91,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run the command in `argv`; bad input exits with a one-line error (see -v for more)."""
     args = parse_args(argv)
+    try:
+        _run(args)
+    except (OSError, ValueError, yaml.YAMLError) as error:
+        if getattr(args, "verbose", False):
+            raise
+        raise SystemExit(f"error: {error}") from error
+
+
+def _run(args: argparse.Namespace) -> None:
     if args.command == "predict":
         _predict(args)
         return
 
     config_paths = args.config if isinstance(args.config, list) else [args.config]
     configs = [_with_overrides(load_config(path), args) for path in config_paths]
+    names = [config.name for config in configs]
+    if len(set(names)) < len(names):
+        raise ValueError(f"Configs must have different names, got {names}")
 
     output_dir = Path(configs[0].output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -142,6 +158,8 @@ def _predict(args: argparse.Namespace) -> None:
     from diabetes_classifier.predict import Predictor
 
     if args.input is not None:
+        if any(getattr(args, column) is not None for column in FEATURE_FLAGS):
+            raise ValueError("Give either --input or the patient's values as flags, not both")
         features = pd.read_csv(args.input)
     else:
         missing = [
@@ -155,12 +173,16 @@ def _predict(args: argparse.Namespace) -> None:
             [{column: getattr(args, column) or 0.0 for column in FEATURE_FLAGS}]
         )
 
-    predictor = Predictor.load(args.model)
+    try:
+        predictor = Predictor.load(args.model)
+    except TypeError as error:
+        raise ValueError(str(error)) from error
     result = features.assign(
         probability=predictor.predict_proba(features).round(3),
         prediction=["diabetes" if p else "no diabetes" for p in predictor.predict(features)],
     )
     if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         result.to_csv(args.output, index=False)
         print(f"Saved {len(result)} predictions to {args.output}")
     elif len(result) == 1:
