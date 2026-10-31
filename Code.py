@@ -11,7 +11,6 @@ from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_sco
 import os
 import json
 import seaborn as sns
-import type
 
 #%% Config
 file_path_data = 'Trials_list.json'
@@ -28,8 +27,8 @@ scaler = StandardScaler()
 
 # noise = torch.rand(614, 8) * 0.001
 # Read the CSV file into a DataFrame
-#enter data file path (data file is in the same folder as the script)
-file_path = 'E:\MON\College\Master\Systems Engineering\Project\dataset\diabetes.csv' 
+# data file is in the dataset folder next to the script
+file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset', 'diabetes.csv')
 data = pd.read_csv(file_path)
 
 # Separate the last column (outcome) and convert it to a PyTorch tensor

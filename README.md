@@ -26,5 +26,3 @@ Best trial: test accuracy 81.17 %, precision 76.92 %, recall 70.18 %, F1 73.39 %
 pip install torch pandas scikit-learn matplotlib seaborn
 python Code.py
 ```
-
-Set `file_path` in `Code.py` to the location of `dataset/diabetes.csv` before running.
