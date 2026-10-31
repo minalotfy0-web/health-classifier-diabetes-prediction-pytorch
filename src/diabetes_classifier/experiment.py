@@ -24,6 +24,7 @@ from diabetes_classifier.data import (
 )
 from diabetes_classifier.evaluate import METRIC_NAMES, choose_threshold, compute_metrics
 from diabetes_classifier.models import fit_predict
+from diabetes_classifier.predict import Predictor
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def run_cv(config: Config) -> pd.DataFrame:
 
     In each fold the training part is split again into train and validation (early
     stopping, threshold); the held-out fold is only scored. The test set is never used.
-    Writes `cv/<config>_folds.csv`, updates `cv_summary.csv` and returns the summary.
+    Writes `cv/<config>_folds.csv` and returns this config's summary.
     """
     set_seed(config.seed)
     development, _ = split_development_test(load_dataset(config.data_path), config)
@@ -78,7 +79,6 @@ def run_cv(config: Config) -> pd.DataFrame:
     folds.to_csv(cv_dir / f"{config.name}_folds.csv", index=False)
 
     summary = summarise_folds(folds)
-    _update_summary(Path(config.output_dir) / "cv_summary.csv", summary, config.name)
     for _, row in summary.iterrows():
         logger.info(
             "[%s] %-22s ROC AUC %.3f ± %.3f | accuracy %.1f%% ± %.1f",
@@ -101,13 +101,29 @@ def summarise_folds(folds: pd.DataFrame) -> pd.DataFrame:
     return summary.reset_index().sort_values("roc_auc_mean", ascending=False)
 
 
+def load_cv_folds(output_dir: str | Path) -> pd.DataFrame:
+    """Fold scores of every CV run saved in `output_dir/cv`.
+
+    The baselines don't depend on the network settings, so configs that share the
+    preprocessing produce identical baseline rows; only the first copy is kept.
+    """
+    paths = sorted((Path(output_dir) / "cv").glob("*_folds.csv"))
+    folds = pd.concat(pd.read_csv(path) for path in paths)
+    return folds.drop_duplicates(subset=["model", "fold", *METRIC_NAMES])
+
+
+def write_cv_summary(output_dir: str | Path) -> Path:
+    """Summarise all CV runs into `output_dir/cv_summary.csv`."""
+    path = Path(output_dir) / "cv_summary.csv"
+    summarise_folds(load_cv_folds(output_dir)).to_csv(path, index=False)
+    return path
+
+
 def plot_cv_results(output_dir: str | Path) -> Path:
     """Draw the comparison of every CV run saved in `output_dir/cv`."""
-    cv_dir = Path(output_dir) / "cv"
-    folds = pd.concat(pd.read_csv(path) for path in sorted(cv_dir.glob("*_folds.csv")))
     path = Path(output_dir) / "figures" / "cv_comparison.png"
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig = plots.cv_comparison(folds)
+    fig = plots.cv_comparison(load_cv_folds(output_dir))
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return path
@@ -117,7 +133,8 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
     """Train on the development set and evaluate every model once on the test set.
 
     Outputs go to `<output_dir>/<config name>/`: metrics.json, test_results.csv and
-    figures. The primary model (first in `config.models`) is appended to trials.csv.
+    figures. The primary model (first in `config.models`) is saved as model.joblib for
+    `predict` and appended to trials.csv.
     """
     set_seed(config.seed)
     df = load_dataset(config.data_path)
@@ -134,7 +151,8 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
         data.n_features,
     )
 
-    outputs, histories = fit_predict(config, data, seed=config.seed)
+    outputs, fitted = fit_predict(config, data, seed=config.seed)
+    histories = fitted.histories
     results = {}
     for model_name, output in outputs.items():
         threshold = choose_threshold(data.y_val, output.val_probs, config.threshold)
@@ -166,6 +184,13 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
         plots.pairplot(df).savefig(shared / "pairplot.png", dpi=100, bbox_inches="tight")
     logger.info("Saved figures to %s", figures_dir)
 
+    Predictor(
+        model_name=primary,
+        threshold=results[primary].threshold,
+        preprocessor=data.preprocessor,
+        models=fitted.only(primary),
+    ).save(run_dir / "model.joblib")
+
     pd.DataFrame([{"model": name, **metrics.scores()} for name, metrics in results.items()]).to_csv(
         run_dir / "test_results.csv", index=False
     )
@@ -195,14 +220,6 @@ def run_final(config: Config, pairplot: bool = False) -> dict[str, dict]:
         },
     )
     return {name: metrics.as_dict() for name, metrics in results.items()}
-
-
-def _update_summary(path: Path, summary: pd.DataFrame, config_name: str) -> None:
-    """Replace this config's rows in the shared CV summary."""
-    if path.exists():
-        existing = pd.read_csv(path)
-        summary = pd.concat([existing[existing["config"] != config_name], summary])
-    summary.sort_values("roc_auc_mean", ascending=False).to_csv(path, index=False)
 
 
 def _append_trial(path: Path, trial: dict) -> None:

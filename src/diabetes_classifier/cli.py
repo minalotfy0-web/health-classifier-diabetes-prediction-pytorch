@@ -1,4 +1,4 @@
-"""Command-line interface: `python -m diabetes_classifier {cv,tune,train} ...`."""
+"""Command-line interface: `python -m diabetes_classifier {cv,tune,train,predict} ...`."""
 
 import argparse
 import dataclasses
@@ -8,6 +8,18 @@ from pathlib import Path
 from diabetes_classifier.config import Config, load_config, save_config
 
 DEFAULT_CONFIG = Path("configs/default.yaml")
+DEFAULT_MODEL = Path("results/tuned/model.joblib")
+FEATURE_FLAGS = {
+    "Pregnancies": ("--pregnancies", "number of pregnancies"),
+    "Glucose": ("--glucose", "plasma glucose, 2 h oral glucose tolerance test (mg/dl)"),
+    "BloodPressure": ("--blood-pressure", "diastolic blood pressure (mm Hg)"),
+    "SkinThickness": ("--skin-thickness", "triceps skin-fold thickness (mm)"),
+    "Insulin": ("--insulin", "2-hour serum insulin (µU/ml)"),
+    "BMI": ("--bmi", "body mass index (kg/m²)"),
+    "DiabetesPedigreeFunction": ("--pedigree", "diabetes pedigree function"),
+    "Age": ("--age", "age (years)"),
+}
+REQUIRED_FEATURES = ("Age", "DiabetesPedigreeFunction")
 OVERRIDES = (
     "seed",
     "max_epochs",
@@ -59,11 +71,28 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     train.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     train.add_argument("--pairplot", action="store_true", help="also draw the feature pairplot")
     train.add_argument("--show", action="store_true", help="display figures after the run")
+
+    predict = commands.add_parser(
+        "predict",
+        help="predict diabetes for new patients with a saved model",
+        description="Give either --input (a CSV with the eight feature columns) or the patient's "
+        "values as flags. Omitted or 0 values for glucose, blood pressure, skin thickness, "
+        "insulin and BMI are treated as not measured.",
+    )
+    predict.add_argument("--model", type=Path, default=DEFAULT_MODEL, help="saved model file")
+    predict.add_argument("--input", type=Path, help="CSV of patients to score")
+    predict.add_argument("--output", type=Path, help="write predictions to this CSV")
+    for column, (flag, description) in FEATURE_FLAGS.items():
+        predict.add_argument(flag, dest=column, type=float, help=description)
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    if args.command == "predict":
+        _predict(args)
+        return
+
     config_paths = args.config if isinstance(args.config, list) else [args.config]
     configs = [_with_overrides(load_config(path), args) for path in config_paths]
 
@@ -82,10 +111,11 @@ def main(argv: list[str] | None = None) -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
     if args.command == "cv":
-        from diabetes_classifier.experiment import plot_cv_results, run_cv
+        from diabetes_classifier.experiment import plot_cv_results, run_cv, write_cv_summary
 
         for config in configs:
             run_cv(config)
+        logging.info("Saved %s", write_cv_summary(output_dir))
         logging.info("Saved %s", plot_cv_results(output_dir))
 
     elif args.command == "tune":
@@ -104,6 +134,39 @@ def main(argv: list[str] | None = None) -> None:
             import matplotlib.pyplot as plt
 
             plt.show()
+
+
+def _predict(args: argparse.Namespace) -> None:
+    import pandas as pd
+
+    from diabetes_classifier.predict import Predictor
+
+    if args.input is not None:
+        features = pd.read_csv(args.input)
+    else:
+        missing = [
+            FEATURE_FLAGS[column][0]
+            for column in REQUIRED_FEATURES
+            if getattr(args, column) is None
+        ]
+        if missing:
+            raise SystemExit(f"Give --input or at least {' and '.join(missing)}")
+        features = pd.DataFrame([{column: getattr(args, column) or 0.0 for column in FEATURE_FLAGS}])
+
+    predictor = Predictor.load(args.model)
+    result = features.assign(
+        probability=predictor.predict_proba(features).round(3),
+        prediction=["diabetes" if p else "no diabetes" for p in predictor.predict(features)],
+    )
+    if args.output is not None:
+        result.to_csv(args.output, index=False)
+        print(f"Saved {len(result)} predictions to {args.output}")
+    else:
+        print(result.to_string(index=False))
+    print(
+        f"Model: {predictor.model_name}, threshold {predictor.threshold:.3f}. "
+        "Research project only, not for clinical use."
+    )
 
 
 def _with_overrides(config: Config, args: argparse.Namespace) -> Config:

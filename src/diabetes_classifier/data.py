@@ -11,6 +11,16 @@ from diabetes_classifier.config import Config
 from diabetes_classifier.preprocessing import Preprocessor
 
 TARGET_COLUMN = "Outcome"
+FEATURE_COLUMNS = (
+    "Pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age",
+)
 
 
 @dataclass
@@ -28,6 +38,7 @@ class FoldData:
     X_eval: np.ndarray
     y_eval: np.ndarray
     feature_names: list[str]
+    preprocessor: Preprocessor
 
     @property
     def n_features(self) -> int:
@@ -73,4 +84,6 @@ def prepare_fold(
     X_train, y_train = arrays(train_df)
     X_val, y_val = arrays(val_df)
     X_eval, y_eval = arrays(eval_df)
-    return FoldData(X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_)
+    return FoldData(
+        X_train, y_train, X_val, y_val, X_eval, y_eval, preprocessor.feature_names_, preprocessor
+    )

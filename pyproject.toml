@@ -19,6 +19,7 @@ dependencies = [
     "seaborn",
     "PyYAML",
     "optuna",
+    "joblib",
 ]
 
 [project.optional-dependencies]

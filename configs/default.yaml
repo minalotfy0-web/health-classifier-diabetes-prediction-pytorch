@@ -32,8 +32,9 @@ log_every: 100
 threshold: f1               # f1 or youden (tuned on the validation set), or a fixed probability
 ensemble_size: 5            # networks trained with different seeds, probabilities averaged
 
-# Models compared in cross-validation and on the test set (the first one is the primary model)
-models: [nn, logistic_regression, random_forest, gradient_boosting, nn+gradient_boosting]
+# Models compared in cross-validation and on the test set. The first is the primary model
+# (best in CV): `train` saves it as model.joblib for `predict`.
+models: [nn+gradient_boosting, nn, logistic_regression, random_forest, gradient_boosting]
 
 # Repeated stratified k-fold cross-validation on the development set (test set excluded)
 cv_folds: 5

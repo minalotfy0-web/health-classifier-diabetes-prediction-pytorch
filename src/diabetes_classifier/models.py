@@ -1,6 +1,6 @@
 """Neural-network ensemble, classical baselines and their combination."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 from sklearn.base import ClassifierMixin
@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 
 from diabetes_classifier.config import Config
 from diabetes_classifier.data import FoldData
+from diabetes_classifier.model import DiabetesClassifier
 from diabetes_classifier.train import TrainingHistory, predict_proba, train_model
 
 COMBINATIONS = {"nn+gradient_boosting": ("nn", "gradient_boosting")}
@@ -22,46 +23,60 @@ class ModelOutput:
     eval_probs: np.ndarray
 
 
-def fit_predict(
-    config: Config, data: FoldData, seed: int
-) -> tuple[dict[str, ModelOutput], list[TrainingHistory]]:
-    """Train every model in `config.models` and return its predictions.
+@dataclass
+class FittedModels:
+    """Trained networks (the "nn" ensemble) and scikit-learn models."""
 
-    Also returns the training histories of the networks in the ensemble.
-    """
+    networks: list[DiabetesClassifier] = field(default_factory=list)
+    sklearn: dict[str, ClassifierMixin] = field(default_factory=dict)
+    histories: list[TrainingHistory] = field(default_factory=list)
+
+    def predict_proba(self, name: str, X: np.ndarray) -> np.ndarray:
+        """Probability of diabetes from model `name` (ensembles average their parts)."""
+        if name == "nn":
+            return np.mean([predict_proba(network, X) for network in self.networks], axis=0)
+        if name in COMBINATIONS:
+            return np.mean([self.predict_proba(part, X) for part in COMBINATIONS[name]], axis=0)
+        return self.sklearn[name].predict_proba(X)[:, 1]
+
+    def only(self, name: str) -> "FittedModels":
+        """The models needed to predict with `name`, without training histories."""
+        parts = set(COMBINATIONS.get(name, (name,)))
+        return FittedModels(
+            networks=self.networks if "nn" in parts else [],
+            sklearn={key: model for key, model in self.sklearn.items() if key in parts},
+        )
+
+
+def fit_models(config: Config, data: FoldData, seed: int) -> FittedModels:
+    """Train every model in `config.models`, plus the parts of any combination."""
     needed = set(config.models)
     for name in config.models:
         needed.update(COMBINATIONS.get(name, ()))
 
-    outputs: dict[str, ModelOutput] = {}
-    histories: list[TrainingHistory] = []
+    fitted = FittedModels()
     if "nn" in needed:
-        outputs["nn"], histories = _fit_nn_ensemble(config, data, seed)
+        for member in range(config.ensemble_size):
+            network, history = train_model(config, data, seed + member)
+            fitted.networks.append(network)
+            fitted.histories.append(history)
     for name in sorted(needed - {"nn"} - set(COMBINATIONS)):
-        model = _sklearn_model(name, config, seed).fit(data.X_train, data.y_train)
-        outputs[name] = ModelOutput(
-            model.predict_proba(data.X_val)[:, 1], model.predict_proba(data.X_eval)[:, 1]
-        )
-    for name, parts in COMBINATIONS.items():
-        if name in needed:
-            outputs[name] = ModelOutput(
-                np.mean([outputs[p].val_probs for p in parts], axis=0),
-                np.mean([outputs[p].eval_probs for p in parts], axis=0),
-            )
-    return {name: outputs[name] for name in config.models}, histories
+        fitted.sklearn[name] = _sklearn_model(name, config, seed).fit(data.X_train, data.y_train)
+    return fitted
 
 
-def _fit_nn_ensemble(
+def fit_predict(
     config: Config, data: FoldData, seed: int
-) -> tuple[ModelOutput, list[TrainingHistory]]:
-    """Average the probabilities of `ensemble_size` networks trained with different seeds."""
-    val_probs, eval_probs, histories = [], [], []
-    for member in range(config.ensemble_size):
-        model, history = train_model(config, data, seed + member)
-        val_probs.append(predict_proba(model, data.X_val))
-        eval_probs.append(predict_proba(model, data.X_eval))
-        histories.append(history)
-    return ModelOutput(np.mean(val_probs, axis=0), np.mean(eval_probs, axis=0)), histories
+) -> tuple[dict[str, ModelOutput], FittedModels]:
+    """Train every model in `config.models` and predict the validation and evaluation sets."""
+    fitted = fit_models(config, data, seed)
+    outputs = {
+        name: ModelOutput(
+            fitted.predict_proba(name, data.X_val), fitted.predict_proba(name, data.X_eval)
+        )
+        for name in config.models
+    }
+    return outputs, fitted
 
 
 def _sklearn_model(name: str, config: Config, seed: int) -> ClassifierMixin:

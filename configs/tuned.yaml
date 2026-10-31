@@ -31,11 +31,11 @@ log_every: 100
 threshold: f1
 ensemble_size: 5
 models:
+- nn+gradient_boosting
 - nn
 - logistic_regression
 - random_forest
 - gradient_boosting
-- nn+gradient_boosting
 cv_folds: 5
 cv_repeats: 5
 output_dir: ../results
