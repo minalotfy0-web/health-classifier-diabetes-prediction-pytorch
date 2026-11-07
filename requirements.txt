@@ -2,7 +2,7 @@
 # CPU-only torch: pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
 torch==2.15.0
 numpy==2.5.3
-pandas==3.1.0
+pandas==3.1.1
 scikit-learn==1.9.1
 matplotlib==3.11.2
 seaborn==0.13.2
